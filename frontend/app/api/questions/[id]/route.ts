@@ -9,9 +9,9 @@ async function handleRequest(request: NextRequest, id: string) {
         if (request.method !== 'GET') {
             try {
                 body = await request.json();
-            } catch (e) {}
+            } catch (e) { }
         }
-        
+
         const mockReq: any = {
             method: request.method,
             body,
@@ -19,15 +19,15 @@ async function handleRequest(request: NextRequest, id: string) {
             headers: Object.fromEntries(request.headers.entries()),
             user: null,
         };
-        
+
         const token = request.headers.get('authorization')?.replace('Bearer ', '');
         if (token) {
             const jwt = require('jsonwebtoken');
             try {
                 mockReq.user = jwt.verify(token, process.env.JWT_SECRET || 'secret');
-            } catch (e) {}
+            } catch (e) { }
         }
-        
+
         const mockRes: any = {
             statusCode: 200,
             status(code: number) {
@@ -38,7 +38,7 @@ async function handleRequest(request: NextRequest, id: string) {
                 resolve(NextResponse.json(data, { status: this.statusCode }));
             },
         };
-        
+
         try {
             if (request.method === 'GET') {
                 await questionController.getQuestionById(mockReq, mockRes);
