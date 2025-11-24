@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 const examController = require('@/lib/controllers/examController');
 
-async function handleRequest(request: NextRequest) {
-    return new Promise(async (resolve) => {
+async function handleRequest(request: NextRequest): Promise<NextResponse> {
+    return new Promise<NextResponse>(async (resolve) => {
         let body: any = {};
         if (request.method !== 'GET') {
             try {
@@ -53,10 +53,10 @@ async function handleRequest(request: NextRequest) {
     });
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest): Promise<NextResponse> {
     return handleRequest(request);
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
     return handleRequest(request);
 }

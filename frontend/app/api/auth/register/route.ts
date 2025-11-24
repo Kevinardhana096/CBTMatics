@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 const authController = require('@/lib/controllers/authController');
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
     try {
         const body = await request.json();
 
-        return new Promise((resolve) => {
+        return new Promise<NextResponse>((resolve) => {
             const mockReq: any = {
                 body,
                 headers: Object.fromEntries(request.headers.entries()),

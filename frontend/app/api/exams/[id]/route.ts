@@ -3,8 +3,8 @@ const examController = require('@/lib/controllers/examController');
 
 type RouteParams = { params: { id: string } };
 
-async function handleRequest(request: NextRequest, id: string) {
-    return new Promise(async (resolve) => {
+async function handleRequest(request: NextRequest, id: string): Promise<NextResponse> {
+    return new Promise<NextResponse>(async (resolve) => {
         let body: any = {};
         if (request.method !== 'GET') {
             try {
@@ -55,14 +55,14 @@ async function handleRequest(request: NextRequest, id: string) {
     });
 }
 
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
     return handleRequest(request, params.id);
 }
 
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+export async function PUT(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
     return handleRequest(request, params.id);
 }
 
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
     return handleRequest(request, params.id);
 }
