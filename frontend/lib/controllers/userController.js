@@ -3,7 +3,7 @@ const pool = require('../db');
 const bcrypt = require('bcrypt');
 
 // Get all users
-exports.getAllUsers = async (req, res) => {
+exports.getUsers = async (req, res) => {
     try {
         const { role } = req.query;
         let query = 'SELECT id, username, email, role, created_at FROM users';

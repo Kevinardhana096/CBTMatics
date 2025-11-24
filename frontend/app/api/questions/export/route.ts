@@ -23,9 +23,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
                 },
                 send(data: any) {
                     const headers = new Headers(this.headers);
-                    resolve(new NextResponse(data, { 
+                    resolve(new NextResponse(data, {
                         status: this.statusCode,
-                        headers 
+                        headers
                     }));
                 },
                 json(data: any) {
