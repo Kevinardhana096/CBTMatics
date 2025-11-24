@@ -11,7 +11,7 @@ async function generateHashes() {
     console.log('admin123:', passwords['admin123']);
     console.log('teacher123:', passwords['teacher123']);
     console.log('student123:', passwords['student123']);
-    
+
     console.log('\n\nSQL Update Statement:');
     console.log(`
 UPDATE users SET password = '${passwords['admin123']}' WHERE email = 'admin@cbt.com';

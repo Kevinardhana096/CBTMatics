@@ -12,42 +12,45 @@ export default function RegisterPage() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const { register, user } = useAuth();
+    const { register, user, loading: authLoading } = useAuth();
     const router = useRouter();
 
-    // Redirect if already logged in
+    // Redirect if already logged in (but not during auth loading)
     useEffect(() => {
-        if (user) {
+        if (user && !authLoading) {
             if (user.role === 'admin' || user.role === 'teacher') {
                 router.push('/admin/questions');
             } else {
                 router.push('/student/exams');
             }
         }
-    }, [user, router]);
+    }, [user, authLoading, router]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError('');
+        setLoading(true);
 
         // Validation
         if (password !== confirmPassword) {
             setError('Password tidak cocok');
+            setLoading(false);
             return;
         }
 
         if (password.length < 6) {
             setError('Password minimal 6 karakter');
+            setLoading(false);
             return;
         }
 
-        setLoading(true);
-
         try {
+            console.log('=== Starting registration ===');
             await register(username, email, password);
+            console.log('=== Registration successful ===');
         } catch (err: any) {
+            console.error('=== Registration failed ===');
+            console.error('Error:', err);
             setError(err.message || 'Registration failed');
-        } finally {
             setLoading(false);
         }
     };

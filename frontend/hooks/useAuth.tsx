@@ -41,13 +41,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const login = async (email: string, password: string) => {
         try {
+            console.log('Login attempt:', { email });
             const response = await api.post('/auth/login', { email, password });
+            console.log('Login response:', response.data);
+            
             const { token, user } = response.data;
 
             localStorage.setItem('token', token);
             localStorage.setItem('user', JSON.stringify(user));
             setUser(user);
 
+            console.log('User logged in:', user);
+            
             // Redirect based on role
             if (user.role === 'admin' || user.role === 'teacher') {
                 router.push('/admin/questions');
@@ -55,6 +60,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 router.push('/student/exams');
             }
         } catch (error: any) {
+            console.error('Login error in hook:', error);
+            console.error('Error response:', error.response?.data);
             throw new Error(error.response?.data?.error || 'Login failed');
         }
     };

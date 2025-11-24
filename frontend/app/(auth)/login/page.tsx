@@ -10,31 +10,44 @@ export default function LoginPage() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const { login, user } = useAuth();
+    const { login, user, loading: authLoading } = useAuth();
     const router = useRouter();
 
-    // Redirect if already logged in
+    // Redirect if already logged in (but not during auth loading)
     useEffect(() => {
-        if (user) {
+        if (user && !authLoading) {
             if (user.role === 'admin' || user.role === 'teacher') {
                 router.push('/admin/questions');
             } else {
                 router.push('/student/exams');
             }
         }
-    }, [user, router]);
+    }, [user, authLoading, router]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError('');
         setLoading(true);
+        
+        // Clear error after a short delay to allow reading previous error
+        setTimeout(() => setError(''), 100);
 
         try {
+            console.log('=== Starting login process ===');
+            console.log('Email:', email);
             await login(email, password);
+            console.log('=== Login successful ===');
+            // Redirect will be handled by useEffect above when user state updates
         } catch (err: any) {
-            setError(err.message || 'Login failed');
-        } finally {
-            setLoading(false);
+            console.error('=== Login failed ===');
+            console.error('Error object:', err);
+            console.error('Error message:', err.message);
+            
+            const errorMessage = err.message || 'Login failed. Periksa email dan password Anda.';
+            setError(errorMessage);
+            setLoading(false); // Only set loading false on error
+            
+            // Keep error visible - don't auto clear
+            console.log('Error displayed:', errorMessage);
         }
     };
 
@@ -75,12 +88,18 @@ export default function LoginPage() {
 
                     <form className="space-y-5" onSubmit={handleSubmit}>
                         {error && (
-                            <div className="rounded-lg bg-red-50 border border-red-200 p-4 animate-shake">
-                                <div className="flex items-center">
-                                    <svg className="h-5 w-5 text-red-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                            <div className="rounded-lg bg-red-50 border-2 border-red-300 p-4">
+                                <div className="flex items-start">
+                                    <svg className="h-5 w-5 text-red-500 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
                                     </svg>
-                                    <div className="text-sm text-red-800">{error}</div>
+                                    <div>
+                                        <div className="text-sm font-semibold text-red-900 mb-1">Login Gagal</div>
+                                        <div className="text-sm text-red-800">{error}</div>
+                                        <div className="text-xs text-red-600 mt-2">
+                                            Check console (F12) untuk detail error
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         )}
