@@ -115,19 +115,19 @@ INSERT INTO users (username, email, password, role)
 VALUES (
         'admin',
         'admin@cbt.com',
-        '$2b$10$mIjmYPzdjpbOqc3Z5gAdlujaf1lh8GvV/9G2i2DY61cRBxQIALqzK',
+        '$2b$10$Bn4tsmSYDDfDEcB2hPTP7Ol6etfj/3XVWrLS7ArBG.0l1jJPkBnGy',
         'admin'
     ),
     (
         'teacher1',
         'teacher@cbt.com',
-        '$2b$10$mIjmYPzdjpbOqc3Z5gAdlujaf1lh8GvV/9G2i2DY61cRBxQIALqzK',
+        '$2b$10$/e9QJ4Z4m5KVAqzetimXG.BxUXL2xkUVPqyHh5eB3xJBwEnRnU1TC',
         'teacher'
     ),
     (
         'student1',
         'student@cbt.com',
-        '$2b$10$mIjmYPzdjpbOqc3Z5gAdlujaf1lh8GvV/9G2i2DY61cRBxQIALqzK',
+        '$2b$10$GGHuILXqoxPD/ZbZ4renyewG/ZXiz0lcWG9S29w7/zpzeKZyQwJHW',
         'student'
     ) ON CONFLICT (email) DO NOTHING;
 -- Sample questions
