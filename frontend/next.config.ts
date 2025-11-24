@@ -1,23 +1,31 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  async rewrites() {
-    return [
-      {
-        source: '/uploads/:path*',
-        destination: 'http://localhost:8080/uploads/:path*',
-      },
-    ];
-  },
+  // Enable static file serving
+  serverExternalPackages: ['pg', 'bcrypt'],
+  
   images: {
     remotePatterns: [
       {
-        protocol: 'http',
-        hostname: 'localhost',
-        port: '8080',
-        pathname: '/uploads/**',
+        protocol: 'https',
+        hostname: '**',
       },
     ],
+  },
+  
+  // Serve uploads folder
+  async headers() {
+    return [
+      {
+        source: '/uploads/:path*',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+    ];
   },
 };
 
