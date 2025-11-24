@@ -231,8 +231,8 @@ exports.importQuestions = async (req, res) => {
 
                 console.log(`ZIP contains ${zipEntries.length} entries`);
 
-                // Create directory for question images
-                const questionsImagesDir = path.join(__dirname, '../../uploads/questions');
+                // Create directory for question images in public folder
+                const questionsImagesDir = path.join(process.cwd(), 'public', 'uploads', 'questions');
                 if (!fs.existsSync(questionsImagesDir)) {
                     fs.mkdirSync(questionsImagesDir, { recursive: true });
                 }
