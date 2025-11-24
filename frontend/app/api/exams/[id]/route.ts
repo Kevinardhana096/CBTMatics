@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 const examController = require('@/lib/controllers/examController');
 
-type RouteParams = { params: { id: string } };
+type RouteParams = { params: Promise<{ id: string }> };
 
 async function handleRequest(request: NextRequest, id: string): Promise<NextResponse> {
     return new Promise<NextResponse>(async (resolve) => {
@@ -56,13 +56,16 @@ async function handleRequest(request: NextRequest, id: string): Promise<NextResp
 }
 
 export async function GET(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
-    return handleRequest(request, params.id);
+    const { id } = await params;
+    return handleRequest(request, id);
 }
 
 export async function PUT(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
-    return handleRequest(request, params.id);
+    const { id } = await params;
+    return handleRequest(request, id);
 }
 
 export async function DELETE(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
-    return handleRequest(request, params.id);
+    const { id } = await params;
+    return handleRequest(request, id);
 }
