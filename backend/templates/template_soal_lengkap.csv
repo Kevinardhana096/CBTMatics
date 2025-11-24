@@ -1,0 +1,11 @@
+question_text,question_type,options,correct_answer,subject,difficulty,points
+"<b>Berapa hasil dari 2 + 2?</b>",multiple_choice,"[""2"",""3"",""4"",""5""]",C,Matematika,easy,10
+"<p>Ibu kota Indonesia adalah <b>Jakarta</b></p>",true_false,"[""Benar"",""Salah""]",Benar,IPS,easy,5
+"<p>Jelaskan proses <i>fotosintesis</i> pada tumbuhan dengan lengkap!</p>",essay,,"Fotosintesis adalah proses...",Biologi,medium,20
+"<p>Planet terbesar di tata surya adalah?</p>",multiple_choice,"[""Mars"",""Bumi"",""Jupiter"",""Saturnus""]",C,IPA,medium,10
+"<p>Hitunglah <span class='math'>x</span> jika <span class='math'>x + 5 = 10</span></p>",multiple_choice,"[""3"",""4"",""5"",""6""]",C,Matematika,easy,10
+"<p>Siapakah presiden pertama Indonesia?</p>",multiple_choice,"[""Soekarno"",""Soeharto"",""Habibie"",""Megawati""]",A,IPS,easy,5
+"<p>Rumus kimia air adalah H<sub>2</sub>O</p>",true_false,"[""Benar"",""Salah""]",Benar,Kimia,easy,5
+"<p>Jelaskan perbedaan antara <b>prokariota</b> dan <b>eukariota</b></p>",essay,,"Prokariota tidak memiliki nukleus...",Biologi,hard,25
+"<p>Berapa hasil dari 15 × 12?</p>",multiple_choice,"[""150"",""160"",""170"",""180""]",D,Matematika,medium,10
+"<p>Bahasa pemrograman Python menggunakan indentasi untuk <i>block code</i></p>",true_false,"[""Benar"",""Salah""]",Benar,Informatika,easy,5

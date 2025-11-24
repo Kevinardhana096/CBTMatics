@@ -1,0 +1,28 @@
+question_text,question_type,options,correct_answer,subject,difficulty,points
+"Berapa banyak cara menyusun 5 orang dalam satu barisan?",multiple_choice,"120|720|24|5040",A,Kombinatorika,easy,10
+"Dalam suatu kelas terdapat 10 siswa laki-laki dan 8 siswa perempuan. Berapa banyak cara memilih 3 siswa yang terdiri dari 2 laki-laki dan 1 perempuan?",multiple_choice,"360|720|180|540",A,Kombinatorika,medium,15
+"<p>Berapa banyak cara membagi 12 bola identik ke dalam 4 kotak yang berbeda?</p>",multiple_choice,"455|364|495|220",A,Kombinatorika,medium,15
+"<p>Perhatikan diagram pohon berikut:</p><img src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==' alt='diagram' style='max-width: 100%; height: auto; margin: 10px 0; border-radius: 4px;'/><p>Berapa banyak kemungkinan jalur dari titik A ke titik B?</p>",multiple_choice,"8|12|16|10",C,Kombinatorika,hard,20
+"Sebuah koin dilempar 5 kali. Berapa peluang muncul tepat 3 gambar?",multiple_choice,"5/16|10/32|3/8|1/4",B,Kombinatorika,medium,15
+"Tentukan apakah himpunan bilangan bulat dengan operasi penjumlahan membentuk grup?",multiple_choice,"Ya, karena tertutup dan memiliki elemen identitas|Tidak, karena tidak memiliki invers|Ya, karena komutatif|Tidak, karena tidak asosiatif",A,Struktur Aljabar,medium,15
+"Misalkan G adalah grup dengan operasi *. Jika a * b = e (elemen identitas), maka b disebut?",multiple_choice,"Invers dari a|Subgrup dari a|Koset dari a|Generator dari a",A,Struktur Aljabar,easy,10
+"<p>Apakah ring Z<sub>6</sub> (bilangan bulat modulo 6) merupakan integral domain?</p>",multiple_choice,"Ya, karena tidak memiliki pembagi nol|Tidak, karena 2 × 3 ≡ 0 (mod 6)|Ya, karena komutatif|Tidak, karena tidak memiliki elemen identitas",B,Struktur Aljabar,hard,20
+"Teorema Lagrange menyatakan bahwa jika H adalah subgrup dari grup berhingga G, maka?",multiple_choice,"|H| membagi |G||H| sama dengan |G||H| lebih besar dari |G||H| tidak berhubungan dengan |G|",A,Struktur Aljabar,medium,15
+"<p>Diberikan ring polinomial R[x]. Apakah R[x] merupakan ring komutatif jika R komutatif?</p>",multiple_choice,"Ya, selalu|Tidak, tidak pernah|Tergantung pada karakteristik R|Hanya jika R adalah field",A,Struktur Aljabar,hard,20
+"Jika A adalah matriks 3×3 dan det(A) = 5, maka det(2A) = ?",multiple_choice,"10|40|25|5",B,Aljabar Linear,medium,15
+"Rank dari matriks nol 4×4 adalah?",multiple_choice,"0|1|4|Tidak terdefinisi",A,Aljabar Linear,easy,10
+"<p>Diberikan vektor u = (1, 2, 3) dan v = (2, -1, 1). Hitung u · v (dot product):</p>",multiple_choice,"3|0|5|1",A,Aljabar Linear,easy,10
+"Jika V adalah ruang vektor berdimensi 5 dan W adalah subruang dengan dim(W) = 3, berapakah dim(V/W)?",multiple_choice,"2|3|5|8",A,Aljabar Linear,medium,15
+"<p>Matriks A diagonalisabel jika dan hanya jika:</p>",multiple_choice,"A memiliki n vektor eigen yang bebas linear|det(A) ≠ 0|A adalah matriks simetris|A adalah matriks ortogonal",A,Aljabar Linear,hard,20
+"<img src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==' alt='matrix' style='max-width: 100%; height: auto; margin: 10px 0; border-radius: 4px;'/><p>Hitung eigenvalue dari matriks di atas:</p>",multiple_choice,"λ₁ = 2, λ₂ = 3|λ₁ = 1, λ₂ = 4|λ₁ = 0, λ₂ = 5|λ₁ = -1, λ₂ = 6",B,Aljabar Linear,hard,20
+"Fungsi f(z) = z² adalah fungsi analitik untuk?",multiple_choice,"Semua z ∈ ℂ|Hanya z ≠ 0|Hanya Re(z) > 0|Tidak ada z",A,Analisis Kompleks,medium,15
+"Teorema Cauchy menyatakan bahwa integral kontur dari fungsi analitik pada domain tertutup adalah?",multiple_choice,"0|1|∞|Tergantung fungsi",A,Analisis Kompleks,hard,20
+"<p>Diberikan fungsi f(z) = 1/(z-1). Singularitas dari f terletak di:</p>",multiple_choice,"z = 1|z = 0|z = -1|z = i",A,Analisis Kompleks,medium,15
+"Residu dari f(z) = 1/z² di z = 0 adalah?",multiple_choice,"0|1|-1|Tidak terdefinisi",A,Analisis Kompleks,hard,20
+"<p>Formula Cauchy untuk turunan:</p><img src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==' alt='formula' style='max-width: 100%; height: auto; margin: 10px 0; border-radius: 4px;'/><p>Nilai n! dalam formula di atas menyatakan?</p>",multiple_choice,"Turunan ke-n dari f|Faktorial|Integral ke-n|Koefisien",A,Analisis Kompleks,hard,25
+"Jika fungsi f: ℝ → ℝ kontinu di setiap titik, maka f adalah?",multiple_choice,"Terintegral Riemann|Terdiferensiasi|Monoton|Terbatas",A,Analisis Riil,medium,15
+"Teorema Bolzano-Weierstrass menyatakan bahwa setiap barisan terbatas di ℝ memiliki?",multiple_choice,"Subbarisan konvergen|Limit|Supremum|Infimum",A,Analisis Riil,hard,20
+"Suatu fungsi f dikatakan uniformly continuous jika?",multiple_choice,"Untuk setiap ε > 0, ada δ > 0 yang sama untuk semua x|Kontinu di setiap titik|Terdiferensiasi|Terbatas",A,Analisis Riil,hard,20
+"<p>Deret ∑(1/n²) dari n=1 hingga ∞ adalah:</p>",multiple_choice,"Konvergen|Divergen|Osilasi|Tidak terdefinisi",A,Analisis Riil,medium,15
+"<img src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==' alt='graph' style='max-width: 100%; height: auto; margin: 10px 0; border-radius: 4px;'/><p>Berdasarkan grafik fungsi di atas, fungsi tersebut:</p>",multiple_choice,"Kontinu tapi tidak terdiferensiasi di x=0|Terdiferensiasi di semua titik|Tidak kontinu di x=0|Tidak terbatas",A,Analisis Riil,hard,20
+"Hitung lim(x→0) sin(x)/x:",multiple_choice,"1|0|∞|Tidak ada",A,Analisis Riil,easy,10

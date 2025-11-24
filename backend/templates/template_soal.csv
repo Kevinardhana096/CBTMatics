@@ -1,0 +1,5 @@
+question_text,question_type,options,correct_answer,subject,difficulty,points
+"Berapa hasil dari 2 + 2?",multiple_choice,"[""2"",""3"",""4"",""5""]",C,Matematika,easy,10
+"Ibu kota Indonesia adalah Jakarta",true_false,"[""Benar"",""Salah""]",A,IPS,easy,5
+"Jelaskan proses fotosintesis pada tumbuhan",essay,null,"Fotosintesis adalah proses...",Biologi,medium,20
+"Planet terbesar di tata surya adalah?",multiple_choice,"[""Mars"",""Bumi"",""Jupiter"",""Saturnus""]",C,IPA,medium,10
