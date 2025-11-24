@@ -150,7 +150,12 @@ frontend/
 
 ### Development (`.env.local`)
 ```env
-# Supabase Database
+# Supabase API (from Dashboard > Project Settings > API)
+NEXT_PUBLIC_SUPABASE_URL=https://[PROJECT-REF].supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+# Database Connection (for raw SQL queries)
 DATABASE_URL=postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres
 
 # JWT Secret
@@ -165,7 +170,12 @@ NODE_ENV=development
 
 ### Production (Vercel)
 ```env
-# Supabase Database Connection
+# Supabase API Keys
+NEXT_PUBLIC_SUPABASE_URL=https://[PROJECT-REF].supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+# Database Connection
 DATABASE_URL=postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres
 
 # JWT Secret
@@ -188,7 +198,8 @@ NODE_ENV=production
 2. Buka **SQL Editor** > **New Query**
 3. Copy isi `frontend/database_schema.sql`
 4. Paste dan **Run**
-5. Get connection string dari **Project Settings** > **Database**
+3. Get API keys dari **Project Settings** > **API**
+4. Setup `.env.local` dengan Supabase credentials
 
 📖 **Detailed Guide**: `SUPABASE_MIGRATION.md`
 
@@ -215,13 +226,14 @@ git push origin master
 #### 2. Deploy to Vercel
 1. Connect GitHub repo to Vercel
 2. Set **Root Directory** to `frontend/`
-3. Set environment variables:
-   - `DATABASE_URL` (from Supabase)
-   - `JWT_SECRET` (generate with `openssl rand -base64 32`)
+3. Set environment variables (dari Supabase Dashboard):
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `DATABASE_URL`
+   - `JWT_SECRET` (generate: `openssl rand -base64 32`)
    - `NODE_ENV=production`
-4. Deploy!
-
-#### 3. Access Production
+4. Deploy!#### 3. Access Production
 - Production URL: https://your-app.vercel.app
 
 📖 **Detailed Guides**:

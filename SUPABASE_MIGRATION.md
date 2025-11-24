@@ -43,12 +43,23 @@ psql "postgresql://postgres.[PROJECT-REF]:[YOUR-PASSWORD]@db.[PROJECT-REF].supab
 \i frontend/database_schema.sql
 ```
 
-### 3. Get Connection String
+### 3. Get API Keys & Connection String
 
-1. Di Supabase Dashboard, buka **Project Settings** > **Database**
-2. Scroll ke **Connection String** section
-3. Pilih tab **URI**
-4. Copy connection string yang sudah include password:
+#### A. API Keys (Recommended - untuk Supabase Client SDK)
+
+1. Di Supabase Dashboard, buka **Project Settings** > **API**
+2. Copy 3 values berikut:
+   - **Project URL**: `https://[PROJECT-REF].supabase.co`
+   - **anon public**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...` (untuk client-side)
+   - **service_role**: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...` (untuk server-side)
+
+⚠️ **PENTING**: `service_role` key adalah **SECRET** - jangan expose di client!
+
+#### B. Database Connection String (Optional - untuk raw SQL)
+
+1. Buka **Project Settings** > **Database**
+2. Scroll ke **Connection String** > pilih tab **URI**
+3. Copy connection string:
    ```
    postgresql://postgres.[PROJECT-REF]:[YOUR-PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres
    ```
@@ -58,7 +69,12 @@ psql "postgresql://postgres.[PROJECT-REF]:[YOUR-PASSWORD]@db.[PROJECT-REF].supab
 #### Development (`.env.local`)
 
 ```env
-# Supabase Database Connection
+# Supabase API Keys (from Dashboard > Project Settings > API)
+NEXT_PUBLIC_SUPABASE_URL=https://[PROJECT-REF].supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
+# Supabase Database Connection (for raw SQL)
 DATABASE_URL=postgresql://postgres.[PROJECT-REF]:[YOUR-PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres
 
 # JWT Secret
@@ -78,6 +94,9 @@ NODE_ENV=development
 
 | Variable Name | Value | Environment |
 |--------------|-------|-------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://[PROJECT-REF].supabase.co` | Production |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `eyJhbGciOiJIUzI1NiIsInR5cCI...` | Production |
+| `SUPABASE_SERVICE_ROLE_KEY` | `eyJhbGciOiJIUzI1NiIsInR5cCI...` | Production |
 | `DATABASE_URL` | `postgresql://postgres.[PROJECT-REF]:...` | Production |
 | `JWT_SECRET` | `your-32-char-secret` | Production |
 | `NODE_ENV` | `production` | Production |

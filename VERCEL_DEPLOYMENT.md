@@ -31,21 +31,30 @@ git push origin master
    - **Output Directory**: `.next`
 
 6. **Environment Variables** (Click "Add" untuk setiap variable):
-   ```
-   DATABASE_URL=postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres
-   JWT_SECRET=<generate-random-secret-key>
-   NODE_ENV=production
-   NEXT_PUBLIC_API_URL=/api
-   ```
-
-   **Get DATABASE_URL**:
-   - Buka [Supabase Dashboard](https://supabase.com/dashboard)
-   - Project Settings > Database > Connection String > URI
-   - Copy connection string dengan password
-
+   
+   **Get dari Supabase Dashboard**:
+   - `Project Settings > API`:
+     - `NEXT_PUBLIC_SUPABASE_URL` → Project URL
+     - `NEXT_PUBLIC_SUPABASE_ANON_KEY` → anon public
+     - `SUPABASE_SERVICE_ROLE_KEY` → service_role (⚠️ SECRET!)
+   
+   - `Project Settings > Database > Connection String > URI`:
+     - `DATABASE_URL` → Copy connection string
+   
    **Generate JWT_SECRET**:
    ```bash
    openssl rand -base64 32
+   ```
+   
+   **Final Environment Variables**:
+   ```
+   NEXT_PUBLIC_SUPABASE_URL=https://[PROJECT-REF].supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+   SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+   DATABASE_URL=postgresql://postgres.[PROJECT-REF]:[PASSWORD]@...
+   JWT_SECRET=<generated-32-char-secret>
+   NODE_ENV=production
+   NEXT_PUBLIC_API_URL=/api
    ```
 
 7. Click **"Deploy"**
