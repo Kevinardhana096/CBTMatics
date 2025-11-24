@@ -13,21 +13,24 @@ export default function LoginPage() {
     const { login, user, loading: authLoading } = useAuth();
     const router = useRouter();
 
-    // Redirect if already logged in (but not during auth loading)
+    // Redirect if already logged in (only check once after initial load)
     useEffect(() => {
-        if (user && !authLoading) {
+        // Only redirect if user exists and we're not in the middle of auth loading
+        // and not in the middle of a login submission
+        if (user && !authLoading && !loading) {
+            console.log('User already logged in, redirecting...', user);
             if (user.role === 'admin' || user.role === 'teacher') {
                 router.push('/admin/questions');
             } else {
                 router.push('/student/exams');
             }
         }
-    }, [user, authLoading, router]);
+    }, [user, authLoading, router]); // Removed 'loading' from deps to prevent redirect during login
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        
+
         // Clear error after a short delay to allow reading previous error
         setTimeout(() => setError(''), 100);
 
@@ -41,11 +44,11 @@ export default function LoginPage() {
             console.error('=== Login failed ===');
             console.error('Error object:', err);
             console.error('Error message:', err.message);
-            
+
             const errorMessage = err.message || 'Login failed. Periksa email dan password Anda.';
             setError(errorMessage);
             setLoading(false); // Only set loading false on error
-            
+
             // Keep error visible - don't auto clear
             console.log('Error displayed:', errorMessage);
         }

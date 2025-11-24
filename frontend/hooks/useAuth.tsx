@@ -30,13 +30,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Check if user is logged in on mount
     useEffect(() => {
+        console.log('=== useAuth initializing ===');
         const token = localStorage.getItem('token');
         const savedUser = localStorage.getItem('user');
 
         if (token && savedUser) {
-            setUser(JSON.parse(savedUser));
+            const parsedUser = JSON.parse(savedUser);
+            console.log('Found saved user:', parsedUser);
+            setUser(parsedUser);
+        } else {
+            console.log('No saved user found');
         }
         setLoading(false);
+        console.log('=== useAuth initialized ===');
     }, []);
 
     const login = async (email: string, password: string) => {
@@ -44,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.log('Login attempt:', { email });
             const response = await api.post('/auth/login', { email, password });
             console.log('Login response:', response.data);
-            
+
             const { token, user } = response.data;
 
             localStorage.setItem('token', token);
@@ -52,7 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(user);
 
             console.log('User logged in:', user);
-            
+
             // Redirect based on role
             if (user.role === 'admin' || user.role === 'teacher') {
                 router.push('/admin/questions');

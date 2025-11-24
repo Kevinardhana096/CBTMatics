@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/api';
 
@@ -23,14 +24,25 @@ interface ExamStatus {
 }
 
 export default function StudentExamsPage() {
-    const { user, logout } = useAuth();
+    const { user, logout, loading: authLoading } = useAuth();
     const [exams, setExams] = useState<Exam[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const router = useRouter();
+
+    // Protect route - redirect if not logged in
+    useEffect(() => {
+        if (!authLoading && !user) {
+            console.log('No user found, redirecting to login...');
+            router.push('/login');
+        }
+    }, [user, authLoading, router]);
 
     useEffect(() => {
-        fetchExams();
-    }, []);
+        if (user) {
+            fetchExams();
+        }
+    }, [user]);
 
     const fetchExams = async () => {
         try {
@@ -101,6 +113,23 @@ export default function StudentExamsPage() {
         };
     };
 
+    // Show loading while checking auth
+    if (authLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' }}>
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#112C70] mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Loading...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Don't render if no user (will redirect)
+    if (!user) {
+        return null;
+    }
+
     return (
         <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' }}>
             {/* Header */}
@@ -111,7 +140,7 @@ export default function StudentExamsPage() {
                             <h1 className="text-white text-xl font-bold">CBT System - Student</h1>
                         </div>
                         <div className="flex items-center space-x-4">
-                            <span className="text-white text-sm">👤 {user?.username}</span>
+                            <span className="text-white text-sm">👤 {user.username}</span>
                             <button
                                 onClick={logout}
                                 className="px-4 py-2 text-sm text-white bg-red-600 hover:bg-red-700 rounded-lg transition"
