@@ -1,9 +1,11 @@
-// Database connection using environment variables from Vercel Postgres
+// Database connection using Supabase PostgreSQL
 const { Pool } = require('pg');
 
 const pool = new Pool({
-    connectionString: process.env.POSTGRES_URL,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+        rejectUnauthorized: false
+    }
 });
 
 module.exports = pool;

@@ -5,7 +5,9 @@
 Project sudah dikonfigurasi untuk deploy sebagai monorepo dengan:
 - **Frontend**: Next.js
 - **Backend**: Express.js API dalam Next.js API Routes
-- **Database**: Vercel Postgres
+- **Database**: Supabase PostgreSQL
+
+⚠️ **NOTE**: Sekarang menggunakan Supabase, bukan Vercel Postgres. Lihat `SUPABASE_MIGRATION.md` untuk setup database.
 
 ## Step-by-Step Deployment
 
@@ -30,25 +32,37 @@ git push origin master
 
 6. **Environment Variables** (Click "Add" untuk setiap variable):
    ```
+   DATABASE_URL=postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres
    JWT_SECRET=<generate-random-secret-key>
    NODE_ENV=production
    NEXT_PUBLIC_API_URL=/api
    ```
 
+   **Get DATABASE_URL**:
+   - Buka [Supabase Dashboard](https://supabase.com/dashboard)
+   - Project Settings > Database > Connection String > URI
+   - Copy connection string dengan password
+
+   **Generate JWT_SECRET**:
+   ```bash
+   openssl rand -base64 32
+   ```
+
 7. Click **"Deploy"**
 
-### 3. Setup Database (Vercel Postgres)
+### 3. Setup Database (Supabase)
 
-Setelah deploy berhasil:
+**BEFORE deploying**, setup Supabase database terlebih dahulu:
 
-1. Di dashboard Vercel project, pilih tab **"Storage"**
-2. Click **"Create Database"**
-3. Pilih **"Postgres"**
-4. Click **"Continue"**
-5. Database akan otomatis terhubung dengan environment variables:
-   - `POSTGRES_URL`
-   - `POSTGRES_PRISMA_URL`
-   - `POSTGRES_URL_NON_POOLING`
+1. Buka [Supabase Dashboard](https://supabase.com/dashboard)
+2. Create new project (pilih region Singapore/Tokyo)
+3. Tunggu database ready (~2 menit)
+4. Buka **SQL Editor** > **New Query**
+5. Copy semua isi file `frontend/database_schema.sql`
+6. Paste dan click **"Run"** (Ctrl + Enter)
+7. Verifikasi di **Table Editor** - harus ada 6 tabel
+
+📖 **Detailed Guide**: Lihat `SUPABASE_MIGRATION.md`
    - `POSTGRES_USER`
    - `POSTGRES_HOST`
    - `POSTGRES_PASSWORD`
