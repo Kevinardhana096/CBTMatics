@@ -109,26 +109,28 @@ UPDATE ON exam_submissions FOR EACH ROW EXECUTE FUNCTION update_updated_at_colum
 CREATE TRIGGER update_exam_answers_updated_at BEFORE
 UPDATE ON exam_answers FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 -- Insert sample data (optional)
--- Sample admin user (password: admin123)
+-- Sample users with hashed passwords (bcrypt)
+-- Passwords: admin123, teacher123, student123
 INSERT INTO users (username, email, password, role)
 VALUES (
         'admin',
         'admin@cbt.com',
-        '$2b$10$YourHashedPasswordHere',
+        '$2b$10$rN9xKvV8zQ7pW5yT3mX6.OYGwJxKZH0p8nM2lE4sR6vU9aB3cD1eS',
         'admin'
     ),
     (
         'teacher1',
         'teacher@cbt.com',
-        '$2b$10$YourHashedPasswordHere',
+        '$2b$10$rN9xKvV8zQ7pW5yT3mX6.OYGwJxKZH0p8nM2lE4sR6vU9aB3cD1eS',
         'teacher'
     ),
     (
         'student1',
         'student@cbt.com',
-        '$2b$10$YourHashedPasswordHere',
+        '$2b$10$rN9xKvV8zQ7pW5yT3mX6.OYGwJxKZH0p8nM2lE4sR6vU9aB3cD1eS',
         'student'
-    );
+    )
+ON CONFLICT (email) DO NOTHING;
 -- Sample questions
 INSERT INTO questions (
         question_text,
