@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyToken } from '@/lib/auth-helper';
 const examController = require('@/lib/controllers/examController');
 
 async function handleRequest(request: NextRequest): Promise<NextResponse> {
@@ -58,5 +59,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+    const user = verifyToken(request);
+    if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     return handleRequest(request);
 }

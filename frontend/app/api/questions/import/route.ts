@@ -1,10 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';
 import fs from 'fs';
+import { verifyToken } from '@/lib/auth-helper';
 const questionController = require('@/lib/controllers/questionController');
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
     try {
+        // Verify authentication
+        const user = verifyToken(request);
+        if (!user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const formData = await request.formData();
         const file = formData.get('file');
 
@@ -47,7 +54,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
                 },
                 body: {},
                 headers: Object.fromEntries(request.headers.entries()),
-                user: (request as any).user,
+                user: user, // From JWT token
             };
 
             const mockRes: any = {

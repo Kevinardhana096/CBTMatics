@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyToken } from '@/lib/auth-helper';
 const submissionController = require('@/lib/controllers/submissionController');
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+    const user = verifyToken(request);
+    if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     try {
         const body = await request.json();
 
@@ -9,7 +14,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             const mockReq: any = {
                 body,
                 headers: Object.fromEntries(request.headers.entries()),
-                user: (request as any).user,
+                user: user,
             };
 
             const mockRes: any = {

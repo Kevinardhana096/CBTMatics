@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyToken } from '@/lib/auth-helper';
 const questionController = require('@/lib/controllers/questionController');
 
 type RouteParams = { params: Promise<{ id: string }> };
@@ -61,11 +62,19 @@ export async function GET(request: NextRequest, { params }: RouteParams): Promis
 }
 
 export async function PUT(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
+    const user = verifyToken(request);
+    if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const { id } = await params;
     return handleRequest(request, id);
 }
 
 export async function DELETE(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
+    const user = verifyToken(request);
+    if (!user) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
     const { id } = await params;
     return handleRequest(request, id);
 }
