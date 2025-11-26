@@ -9,7 +9,7 @@ function getSupabase() {
     if (!supabaseInstance) {
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
         const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-        
+
         if (!supabaseUrl || !supabaseKey) {
             console.error('Missing Supabase environment variables:', {
                 hasUrl: !!supabaseUrl,
@@ -17,7 +17,7 @@ function getSupabase() {
             });
             throw new Error('Supabase configuration missing');
         }
-        
+
         supabaseInstance = createClient(supabaseUrl, supabaseKey);
     }
     return supabaseInstance;
@@ -47,7 +47,7 @@ exports.getUsers = async (req, res) => {
                     .from('users')
                     .select('id, username, email, role, created_at')
                     .order('created_at', { ascending: false });
-                
+
                 if (error2) {
                     return res.status(500).json({ error: 'Failed to fetch users' });
                 }

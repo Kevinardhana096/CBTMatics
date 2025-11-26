@@ -9,7 +9,7 @@ function getSupabase() {
     if (!supabaseInstance) {
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
         const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-        
+
         if (!supabaseUrl || !supabaseKey) {
             console.error('Missing Supabase environment variables:', {
                 hasUrl: !!supabaseUrl,
@@ -17,7 +17,7 @@ function getSupabase() {
             });
             throw new Error('Supabase configuration missing');
         }
-        
+
         supabaseInstance = createClient(supabaseUrl, supabaseKey);
     }
     return supabaseInstance;
@@ -226,9 +226,9 @@ exports.exportQuestions = async (req, res) => {
 
         // Convert to CSV format in memory
         const headers = ['question_text', 'question_type', 'option_a', 'option_b', 'option_c', 'option_d', 'option_e', 'correct_answer', 'subject', 'difficulty', 'points'];
-        
+
         const csvRows = [headers.join(',')];
-        
+
         for (const q of questions) {
             const options = q.options || {};
             const row = [

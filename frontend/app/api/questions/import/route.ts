@@ -31,7 +31,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
         const buffer = Buffer.from(await file.arrayBuffer());
         const fileExt = path.extname(file.name).toLowerCase();
-        
+
         let questions: any[] = [];
 
         // Process CSV or Excel file in memory
@@ -46,8 +46,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             questions = parseExcelData(jsonData);
         } else if (fileExt === '.zip') {
             // ZIP files with images are not supported in serverless environment
-            return NextResponse.json({ 
-                error: 'ZIP files are not supported in production. Please use CSV or Excel files without images, or add images after import.' 
+            return NextResponse.json({
+                error: 'ZIP files are not supported in production. Please use CSV or Excel files without images, or add images after import.'
             }, { status: 400 });
         } else {
             return NextResponse.json({ error: 'Unsupported file format. Use CSV or Excel.' }, { status: 400 });
@@ -125,7 +125,7 @@ function parseCSV(csvContent: string): any[] {
         if (!row.question_text) continue;
 
         // Build options object
-        let options = null;
+        let options: Record<string, string> | null = null;
         if (row.option_a || row.option_b) {
             options = {
                 A: row.option_a || '',
