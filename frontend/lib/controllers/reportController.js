@@ -2,10 +2,16 @@
 // Menggunakan Supabase Client untuk koneksi yang reliable
 const { createClient } = require('@supabase/supabase-js');
 
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Lazy initialization for Supabase client
+let supabaseInstance = null;
+function getSupabase() {
+    if (!supabaseInstance) {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        supabaseInstance = createClient(supabaseUrl, supabaseKey);
+    }
+    return supabaseInstance;
+}
 
 // Get exam report (for admin/teacher)
 exports.getExamReport = async (req, res) => {
@@ -13,7 +19,7 @@ exports.getExamReport = async (req, res) => {
         const { examId } = req.params;
 
         // Get exam info
-        const { data: exam, error: examError } = await supabase
+        const { data: exam, error: examError } = await getSupabase()
             .from('exams')
             .select('*')
             .eq('id', examId)
@@ -24,7 +30,7 @@ exports.getExamReport = async (req, res) => {
         }
 
         // Get all submissions for this exam with user info
-        const { data: submissions, error: subError } = await supabase
+        const { data: submissions, error: subError } = await getSupabase()
             .from('exam_submissions')
             .select(`
                 *,
@@ -77,7 +83,7 @@ exports.getQuestionAnalytics = async (req, res) => {
         const { examId } = req.params;
 
         // Get exam questions
-        const { data: examQuestions } = await supabase
+        const { data: examQuestions } = await getSupabase()
             .from('exam_questions')
             .select('question_id')
             .eq('exam_id', examId);
@@ -89,13 +95,13 @@ exports.getQuestionAnalytics = async (req, res) => {
         const questionIds = examQuestions.map(eq => eq.question_id);
 
         // Get questions
-        const { data: questions } = await supabase
+        const { data: questions } = await getSupabase()
             .from('questions')
             .select('id, question_text, difficulty, correct_answer, points')
             .in('id', questionIds);
 
         // Get all answers for these questions
-        const { data: answers } = await supabase
+        const { data: answers } = await getSupabase()
             .from('exam_answers')
             .select('question_id, answer')
             .in('question_id', questionIds);
@@ -136,7 +142,7 @@ exports.getStudentPerformance = async (req, res) => {
         const { studentId } = req.params;
 
         // Get all submissions for this student
-        const { data: submissions, error } = await supabase
+        const { data: submissions, error } = await getSupabase()
             .from('exam_submissions')
             .select(`
                 *,

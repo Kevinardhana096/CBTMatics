@@ -8,10 +8,16 @@ const fs = require('fs');
 const csv = require('csv-parser');
 const AdmZip = require('adm-zip');
 
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Lazy initialization for Supabase client
+let supabaseInstance = null;
+function getSupabase() {
+    if (!supabaseInstance) {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        supabaseInstance = createClient(supabaseUrl, supabaseKey);
+    }
+    return supabaseInstance;
+}
 
 // Setup multer untuk upload file
 const storage = multer.diskStorage({
@@ -53,7 +59,7 @@ exports.getAllQuestions = async (req, res) => {
         const { page = 1, limit = 10, subject, difficulty } = req.query;
         const offset = (page - 1) * limit;
 
-        let query = supabase.from('questions').select('*', { count: 'exact' });
+        let query = getSupabase().from('questions').select('*', { count: 'exact' });
 
         if (subject) {
             query = query.eq('subject', subject);
@@ -90,7 +96,7 @@ exports.getQuestionById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const { data: question, error } = await supabase
+        const { data: question, error } = await getSupabase()
             .from('questions')
             .select('*')
             .eq('id', id)
@@ -134,7 +140,7 @@ exports.createQuestion = async (req, res) => {
             created_by: req.user.id
         });
 
-        const { data: question, error } = await supabase
+        const { data: question, error } = await getSupabase()
             .from('questions')
             .insert([{
                 question_text,
@@ -179,7 +185,7 @@ exports.updateQuestion = async (req, res) => {
         const { id } = req.params;
         const { question_text, question_type, options, correct_answer, subject, difficulty, points } = req.body;
 
-        const { data: question, error } = await supabase
+        const { data: question, error } = await getSupabase()
             .from('questions')
             .update({
                 question_text,
@@ -214,7 +220,7 @@ exports.deleteQuestion = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const { data, error } = await supabase
+        const { data, error } = await getSupabase()
             .from('questions')
             .delete()
             .eq('id', id)
@@ -576,7 +582,7 @@ exports.importQuestions = async (req, res) => {
                     continue;
                 }
 
-                const { data: question, error: insertError } = await supabase
+                const { data: question, error: insertError } = await getSupabase()
                     .from('questions')
                     .insert([{
                         question_text: q.question_text,

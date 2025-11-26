@@ -2,15 +2,21 @@
 // Menggunakan Supabase Client untuk koneksi yang reliable
 const { createClient } = require('@supabase/supabase-js');
 
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Lazy initialization for Supabase client
+let supabaseInstance = null;
+function getSupabase() {
+    if (!supabaseInstance) {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        supabaseInstance = createClient(supabaseUrl, supabaseKey);
+    }
+    return supabaseInstance;
+}
 
 // Get all exams
 exports.getAllExams = async (req, res) => {
     try {
-        const { data: exams, error } = await supabase
+        const { data: exams, error } = await getSupabase()
             .from('exams')
             .select(`
                 *,
@@ -41,7 +47,7 @@ exports.getExamById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const { data: exam, error: examError } = await supabase
+        const { data: exam, error: examError } = await getSupabase()
             .from('exams')
             .select('*')
             .eq('id', id)
@@ -52,7 +58,7 @@ exports.getExamById = async (req, res) => {
         }
 
         // Get questions for this exam
-        const { data: examQuestions } = await supabase
+        const { data: examQuestions } = await getSupabase()
             .from('exam_questions')
             .select('question_id, question_order')
             .eq('exam_id', id)
@@ -61,7 +67,7 @@ exports.getExamById = async (req, res) => {
         let questions = [];
         if (examQuestions && examQuestions.length > 0) {
             const questionIds = examQuestions.map(eq => eq.question_id);
-            const { data: questionsData } = await supabase
+            const { data: questionsData } = await getSupabase()
                 .from('questions')
                 .select('*')
                 .in('id', questionIds);
@@ -85,7 +91,7 @@ exports.createExam = async (req, res) => {
         const { title, description, duration, start_time, end_time, question_ids } = req.body;
 
         // Insert exam
-        const { data: exam, error: examError } = await supabase
+        const { data: exam, error: examError } = await getSupabase()
             .from('exams')
             .insert([{
                 title,
@@ -111,7 +117,7 @@ exports.createExam = async (req, res) => {
                 question_order: index + 1
             }));
 
-            await supabase.from('exam_questions').insert(examQuestions);
+            await getSupabase().from('exam_questions').insert(examQuestions);
         }
 
         res.status(201).json({
@@ -130,7 +136,7 @@ exports.updateExam = async (req, res) => {
         const { id } = req.params;
         const { title, description, duration, start_time, end_time, question_ids } = req.body;
 
-        const { data: exam, error } = await supabase
+        const { data: exam, error } = await getSupabase()
             .from('exams')
             .update({
                 title,
@@ -151,7 +157,7 @@ exports.updateExam = async (req, res) => {
         // Update exam questions if provided
         if (question_ids) {
             // Delete existing questions
-            await supabase.from('exam_questions').delete().eq('exam_id', id);
+            await getSupabase().from('exam_questions').delete().eq('exam_id', id);
 
             // Insert new questions
             if (question_ids.length > 0) {
@@ -161,7 +167,7 @@ exports.updateExam = async (req, res) => {
                     question_order: index + 1
                 }));
 
-                await supabase.from('exam_questions').insert(examQuestions);
+                await getSupabase().from('exam_questions').insert(examQuestions);
             }
         }
 
@@ -180,7 +186,7 @@ exports.deleteExam = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const { data, error } = await supabase
+        const { data, error } = await getSupabase()
             .from('exams')
             .delete()
             .eq('id', id)
@@ -212,7 +218,7 @@ exports.getAvailableExams = async (req, res) => {
         const user_id = req.user.id;
 
         // Get all active and upcoming exams
-        const { data: exams, error } = await supabase
+        const { data: exams, error } = await getSupabase()
             .from('exams')
             .select('*')
             .gte('end_time', new Date().toISOString())
@@ -225,7 +231,7 @@ exports.getAvailableExams = async (req, res) => {
 
         // Check submission status for each exam
         const examsWithStatus = await Promise.all((exams || []).map(async (exam) => {
-            const { data: submissions } = await supabase
+            const { data: submissions } = await getSupabase()
                 .from('exam_submissions')
                 .select('status')
                 .eq('exam_id', exam.id)

@@ -3,17 +3,23 @@
 const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcrypt');
 
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Lazy initialization for Supabase client
+let supabaseInstance = null;
+function getSupabase() {
+    if (!supabaseInstance) {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        supabaseInstance = createClient(supabaseUrl, supabaseKey);
+    }
+    return supabaseInstance;
+}
 
 // Get all users
 exports.getUsers = async (req, res) => {
     try {
         const { role } = req.query;
 
-        let query = supabase
+        let query = getSupabase()
             .from('users')
             .select('id, username, email, role, created_at')
             .order('created_at', { ascending: false });
@@ -41,7 +47,7 @@ exports.getUserById = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const { data: user, error } = await supabase
+        const { data: user, error } = await getSupabase()
             .from('users')
             .select('id, username, email, role, created_at')
             .eq('id', id)
@@ -69,7 +75,7 @@ exports.createUser = async (req, res) => {
         }
 
         // Cek apakah user sudah ada
-        const { data: existingUsers } = await supabase
+        const { data: existingUsers } = await getSupabase()
             .from('users')
             .select('id')
             .or(`email.eq.${email},username.eq.${username}`);
@@ -82,7 +88,7 @@ exports.createUser = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Insert user baru
-        const { data: user, error } = await supabase
+        const { data: user, error } = await getSupabase()
             .from('users')
             .insert([{
                 username,
@@ -126,7 +132,7 @@ exports.updateUser = async (req, res) => {
             updateData.password = await bcrypt.hash(password, 10);
         }
 
-        const { data: user, error } = await supabase
+        const { data: user, error } = await getSupabase()
             .from('users')
             .update(updateData)
             .eq('id', id)
@@ -152,7 +158,7 @@ exports.deleteUser = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const { data, error } = await supabase
+        const { data, error } = await getSupabase()
             .from('users')
             .delete()
             .eq('id', id)

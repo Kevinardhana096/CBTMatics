@@ -2,10 +2,16 @@
 // Menggunakan Supabase Client untuk koneksi yang reliable
 const { createClient } = require('@supabase/supabase-js');
 
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Lazy initialization for Supabase client
+let supabaseInstance = null;
+function getSupabase() {
+    if (!supabaseInstance) {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        supabaseInstance = createClient(supabaseUrl, supabaseKey);
+    }
+    return supabaseInstance;
+}
 
 // Start exam (create submission) atau lanjutkan yang sudah ada
 exports.startExam = async (req, res) => {
@@ -18,7 +24,7 @@ exports.startExam = async (req, res) => {
         console.log('User ID:', user_id);
 
         // Cek apakah ujian tersedia
-        const { data: exam, error: examError } = await supabase
+        const { data: exam, error: examError } = await getSupabase()
             .from('exams')
             .select('id, title, duration, start_time, end_time')
             .eq('id', exam_id)
@@ -45,7 +51,7 @@ exports.startExam = async (req, res) => {
         }
 
         // Cek apakah sudah ada submission
-        const { data: existingSubmissions } = await supabase
+        const { data: existingSubmissions } = await getSupabase()
             .from('exam_submissions')
             .select('*')
             .eq('exam_id', exam_id)
@@ -69,7 +75,7 @@ exports.startExam = async (req, res) => {
             console.log('✓ Continuing existing submission:', submission.id);
 
             // Load existing answers
-            const { data: existingAnswers } = await supabase
+            const { data: existingAnswers } = await getSupabase()
                 .from('exam_answers')
                 .select('question_id, answer')
                 .eq('submission_id', submission.id);
@@ -85,7 +91,7 @@ exports.startExam = async (req, res) => {
             submission.remaining_time = remainingSeconds;
         } else {
             // Create new submission
-            const { data: newSubmission, error: insertError } = await supabase
+            const { data: newSubmission, error: insertError } = await getSupabase()
                 .from('exam_submissions')
                 .insert([{
                     exam_id,
@@ -124,7 +130,7 @@ exports.saveAnswer = async (req, res) => {
         const { submission_id, question_id, answer } = req.body;
 
         // Cek apakah submission ada dan milik user ini
-        const { data: submission } = await supabase
+        const { data: submission } = await getSupabase()
             .from('exam_submissions')
             .select('*')
             .eq('id', submission_id)
@@ -136,7 +142,7 @@ exports.saveAnswer = async (req, res) => {
         }
 
         // Cek apakah jawaban sudah ada
-        const { data: existingAnswer } = await supabase
+        const { data: existingAnswer } = await getSupabase()
             .from('exam_answers')
             .select('id')
             .eq('submission_id', submission_id)
@@ -146,7 +152,7 @@ exports.saveAnswer = async (req, res) => {
         let result;
         if (existingAnswer) {
             // Update jawaban yang sudah ada
-            const { data, error } = await supabase
+            const { data, error } = await getSupabase()
                 .from('exam_answers')
                 .update({ answer, updated_at: new Date().toISOString() })
                 .eq('submission_id', submission_id)
@@ -157,7 +163,7 @@ exports.saveAnswer = async (req, res) => {
             result = data;
         } else {
             // Insert jawaban baru
-            const { data, error } = await supabase
+            const { data, error } = await getSupabase()
                 .from('exam_answers')
                 .insert([{ submission_id, question_id, answer }])
                 .select()
@@ -185,7 +191,7 @@ exports.submitExam = async (req, res) => {
         console.log('Submission ID:', submission_id);
 
         // Cek apakah submission ada dan milik user ini
-        const { data: submission } = await supabase
+        const { data: submission } = await getSupabase()
             .from('exam_submissions')
             .select('*')
             .eq('id', submission_id)
@@ -201,14 +207,14 @@ exports.submitExam = async (req, res) => {
         }
 
         // Get all answers with question details
-        const { data: answers } = await supabase
+        const { data: answers } = await getSupabase()
             .from('exam_answers')
             .select('question_id, answer')
             .eq('submission_id', submission_id);
 
         // Get question details
         const questionIds = (answers || []).map(a => a.question_id);
-        const { data: questions } = await supabase
+        const { data: questions } = await getSupabase()
             .from('questions')
             .select('id, correct_answer, points, question_type')
             .in('id', questionIds);
@@ -235,7 +241,7 @@ exports.submitExam = async (req, res) => {
         });
 
         // Update submission
-        const { data: updatedSubmission, error: updateError } = await supabase
+        const { data: updatedSubmission, error: updateError } = await getSupabase()
             .from('exam_submissions')
             .update({
                 status: 'submitted',
@@ -273,7 +279,7 @@ exports.getSubmissionById = async (req, res) => {
         const { id } = req.params;
 
         // Get submission info with exam and user details
-        const { data: submission, error } = await supabase
+        const { data: submission, error } = await getSupabase()
             .from('exam_submissions')
             .select(`
                 *,
@@ -293,7 +299,7 @@ exports.getSubmissionById = async (req, res) => {
         }
 
         // Get answers with question info
-        const { data: answers } = await supabase
+        const { data: answers } = await getSupabase()
             .from('exam_answers')
             .select('question_id, answer')
             .eq('submission_id', id);
@@ -302,7 +308,7 @@ exports.getSubmissionById = async (req, res) => {
         const questionIds = (answers || []).map(a => a.question_id);
         let questionsData = [];
         if (questionIds.length > 0) {
-            const { data } = await supabase
+            const { data } = await getSupabase()
                 .from('questions')
                 .select('id, question_text, question_type, options, correct_answer, points')
                 .in('id', questionIds);
@@ -344,7 +350,7 @@ exports.getSubmissionById = async (req, res) => {
 // Get user submissions
 exports.getUserSubmissions = async (req, res) => {
     try {
-        const { data: submissions, error } = await supabase
+        const { data: submissions, error } = await getSupabase()
             .from('exam_submissions')
             .select(`
                 *,
@@ -373,7 +379,7 @@ exports.getUserSubmissions = async (req, res) => {
 // Get user results (for student results page)
 exports.getUserResults = async (req, res) => {
     try {
-        const { data: submissions, error } = await supabase
+        const { data: submissions, error } = await getSupabase()
             .from('exam_submissions')
             .select(`
                 id,
@@ -422,7 +428,7 @@ exports.resetSubmission = async (req, res) => {
         }
 
         // Get submission ID first
-        const { data: submissions } = await supabase
+        const { data: submissions } = await getSupabase()
             .from('exam_submissions')
             .select('id')
             .eq('exam_id', exam_id)
@@ -435,13 +441,13 @@ exports.resetSubmission = async (req, res) => {
         const submission_id = submissions[0].id;
 
         // Delete answers first
-        await supabase
+        await getSupabase()
             .from('exam_answers')
             .delete()
             .eq('submission_id', submission_id);
 
         // Delete submission
-        await supabase
+        await getSupabase()
             .from('exam_submissions')
             .delete()
             .eq('id', submission_id);

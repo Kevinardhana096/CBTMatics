@@ -4,10 +4,16 @@ const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey);
+// Lazy initialization untuk Supabase client
+let supabaseInstance = null;
+function getSupabase() {
+    if (!supabaseInstance) {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        supabaseInstance = createClient(supabaseUrl, supabaseKey);
+    }
+    return supabaseInstance;
+}
 
 // Register user baru
 exports.register = async (req, res) => {
@@ -20,7 +26,7 @@ exports.register = async (req, res) => {
         }
 
         // Cek apakah user sudah ada
-        const { data: existingUsers, error: checkError } = await supabase
+        const { data: existingUsers, error: checkError } = await getSupabase()
             .from('users')
             .select('id')
             .or(`email.eq.${email},username.eq.${username}`);
@@ -38,7 +44,7 @@ exports.register = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Insert user baru
-        const { data: newUser, error: insertError } = await supabase
+        const { data: newUser, error: insertError } = await getSupabase()
             .from('users')
             .insert([{
                 username,
@@ -77,7 +83,7 @@ exports.login = async (req, res) => {
         }
 
         // Cari user berdasarkan email
-        const { data: user, error: findError } = await supabase
+        const { data: user, error: findError } = await getSupabase()
             .from('users')
             .select('*')
             .eq('email', email)
@@ -133,7 +139,7 @@ exports.logout = (req, res) => {
 // Get current user info
 exports.getCurrentUser = async (req, res) => {
     try {
-        const { data: user, error } = await supabase
+        const { data: user, error } = await getSupabase()
             .from('users')
             .select('id, username, email, role, created_at')
             .eq('id', req.user.id)
