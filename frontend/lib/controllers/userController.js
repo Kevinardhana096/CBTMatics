@@ -1,23 +1,35 @@
 // Controller untuk manajemen user (admin)
-const pool = require('../db');
+// Menggunakan Supabase Client untuk koneksi yang reliable
+const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcrypt');
+
+// Initialize Supabase client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Get all users
 exports.getUsers = async (req, res) => {
     try {
         const { role } = req.query;
-        let query = 'SELECT id, username, email, role, created_at FROM users';
-        const params = [];
+
+        let query = supabase
+            .from('users')
+            .select('id, username, email, role, created_at')
+            .order('created_at', { ascending: false });
 
         if (role) {
-            query += ' WHERE role = $1';
-            params.push(role);
+            query = query.eq('role', role);
         }
 
-        query += ' ORDER BY created_at DESC';
+        const { data: users, error } = await query;
 
-        const result = await pool.query(query, params);
-        res.json({ users: result.rows });
+        if (error) {
+            console.error('Error fetching users:', error);
+            return res.status(500).json({ error: 'Failed to fetch users' });
+        }
+
+        res.json({ users: users || [] });
     } catch (err) {
         console.error('Error in getAllUsers:', err);
         res.status(500).json({ error: 'Server error' });
@@ -28,16 +40,18 @@ exports.getUsers = async (req, res) => {
 exports.getUserById = async (req, res) => {
     try {
         const { id } = req.params;
-        const result = await pool.query(
-            'SELECT id, username, email, role, created_at FROM users WHERE id = $1',
-            [id]
-        );
 
-        if (result.rows.length === 0) {
+        const { data: user, error } = await supabase
+            .from('users')
+            .select('id, username, email, role, created_at')
+            .eq('id', id)
+            .single();
+
+        if (error || !user) {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        res.json({ user: result.rows[0] });
+        res.json({ user });
     } catch (err) {
         console.error('Error in getUserById:', err);
         res.status(500).json({ error: 'Server error' });
@@ -55,12 +69,12 @@ exports.createUser = async (req, res) => {
         }
 
         // Cek apakah user sudah ada
-        const userExists = await pool.query(
-            'SELECT * FROM users WHERE email = $1 OR username = $2',
-            [email, username]
-        );
+        const { data: existingUsers } = await supabase
+            .from('users')
+            .select('id')
+            .or(`email.eq.${email},username.eq.${username}`);
 
-        if (userExists.rows.length > 0) {
+        if (existingUsers && existingUsers.length > 0) {
             return res.status(400).json({ error: 'User already exists' });
         }
 
@@ -68,14 +82,25 @@ exports.createUser = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Insert user baru
-        const result = await pool.query(
-            'INSERT INTO users (username, email, password, role) VALUES ($1, $2, $3, $4) RETURNING id, username, email, role',
-            [username, email, hashedPassword, role || 'student']
-        );
+        const { data: user, error } = await supabase
+            .from('users')
+            .insert([{
+                username,
+                email,
+                password: hashedPassword,
+                role: role || 'student'
+            }])
+            .select('id, username, email, role')
+            .single();
+
+        if (error) {
+            console.error('Error creating user:', error);
+            return res.status(500).json({ error: 'Failed to create user' });
+        }
 
         res.status(201).json({
             message: 'User created successfully',
-            user: result.rows[0]
+            user
         });
     } catch (err) {
         console.error('Error in createUser:', err);
@@ -89,30 +114,32 @@ exports.updateUser = async (req, res) => {
         const { id } = req.params;
         const { username, email, role, password } = req.body;
 
-        let query = 'UPDATE users SET username = $1, email = $2, role = $3';
-        const params = [username, email, role];
-        let paramCount = 4;
+        const updateData = {
+            username,
+            email,
+            role,
+            updated_at: new Date().toISOString()
+        };
 
         // Update password jika diberikan
         if (password) {
-            const hashedPassword = await bcrypt.hash(password, 10);
-            query += `, password = $${paramCount}`;
-            params.push(hashedPassword);
-            paramCount++;
+            updateData.password = await bcrypt.hash(password, 10);
         }
 
-        query += `, updated_at = CURRENT_TIMESTAMP WHERE id = $${paramCount} RETURNING id, username, email, role`;
-        params.push(id);
+        const { data: user, error } = await supabase
+            .from('users')
+            .update(updateData)
+            .eq('id', id)
+            .select('id, username, email, role')
+            .single();
 
-        const result = await pool.query(query, params);
-
-        if (result.rows.length === 0) {
+        if (error || !user) {
             return res.status(404).json({ error: 'User not found' });
         }
 
         res.json({
             message: 'User updated successfully',
-            user: result.rows[0]
+            user
         });
     } catch (err) {
         console.error('Error in updateUser:', err);
@@ -124,9 +151,15 @@ exports.updateUser = async (req, res) => {
 exports.deleteUser = async (req, res) => {
     try {
         const { id } = req.params;
-        const result = await pool.query('DELETE FROM users WHERE id = $1 RETURNING id', [id]);
 
-        if (result.rows.length === 0) {
+        const { data, error } = await supabase
+            .from('users')
+            .delete()
+            .eq('id', id)
+            .select('id')
+            .single();
+
+        if (error || !data) {
             return res.status(404).json({ error: 'User not found' });
         }
 

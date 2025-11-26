@@ -1,5 +1,11 @@
 // Controller untuk laporan dan analitik
-const pool = require('../db');
+// Menggunakan Supabase Client untuk koneksi yang reliable
+const { createClient } = require('@supabase/supabase-js');
+
+// Initialize Supabase client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Get exam report (for admin/teacher)
 exports.getExamReport = async (req, res) => {
@@ -7,37 +13,56 @@ exports.getExamReport = async (req, res) => {
         const { examId } = req.params;
 
         // Get exam info
-        const examResult = await pool.query('SELECT * FROM exams WHERE id = $1', [examId]);
+        const { data: exam, error: examError } = await supabase
+            .from('exams')
+            .select('*')
+            .eq('id', examId)
+            .single();
 
-        if (examResult.rows.length === 0) {
+        if (examError || !exam) {
             return res.status(404).json({ error: 'Exam not found' });
         }
 
-        // Get all submissions for this exam
-        const submissionsResult = await pool.query(
-            `SELECT es.*, u.username, u.email 
-             FROM exam_submissions es
-             JOIN users u ON es.user_id = u.id
-             WHERE es.exam_id = $1
-             ORDER BY es.score DESC`,
-            [examId]
-        );
+        // Get all submissions for this exam with user info
+        const { data: submissions, error: subError } = await supabase
+            .from('exam_submissions')
+            .select(`
+                *,
+                users:user_id (username, email)
+            `)
+            .eq('exam_id', examId)
+            .order('score', { ascending: false });
+
+        if (subError) {
+            console.error('Error fetching submissions:', subError);
+            return res.status(500).json({ error: 'Failed to fetch submissions' });
+        }
+
+        // Transform submissions to include username and email at top level
+        const transformedSubmissions = (submissions || []).map(s => ({
+            ...s,
+            username: s.users?.username,
+            email: s.users?.email
+        }));
 
         // Calculate statistics
-        const scores = submissionsResult.rows.map(s => s.score || 0);
-        const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length || 0;
-        const maxScore = Math.max(...scores, 0);
-        const minScore = Math.min(...scores, Infinity) === Infinity ? 0 : Math.min(...scores);
+        const scores = transformedSubmissions.map(s => s.score || 0);
+        const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+        const maxScore = scores.length > 0 ? Math.max(...scores) : 0;
+        const minScore = scores.length > 0 ? Math.min(...scores) : 0;
+        const completedCount = transformedSubmissions.filter(s => s.status === 'submitted').length;
 
         res.json({
-            exam: examResult.rows[0],
-            submissions: submissionsResult.rows,
+            exam,
+            submissions: transformedSubmissions,
             statistics: {
-                totalSubmissions: submissionsResult.rows.length,
+                totalSubmissions: transformedSubmissions.length,
                 averageScore: avgScore.toFixed(2),
                 maxScore,
                 minScore,
-                completionRate: (submissionsResult.rows.filter(s => s.status === 'completed').length / submissionsResult.rows.length * 100).toFixed(2)
+                completionRate: transformedSubmissions.length > 0
+                    ? (completedCount / transformedSubmissions.length * 100).toFixed(2)
+                    : '0.00'
             }
         });
     } catch (err) {
@@ -51,29 +76,54 @@ exports.getQuestionAnalytics = async (req, res) => {
     try {
         const { examId } = req.params;
 
-        const result = await pool.query(
-            `SELECT 
-                q.id,
-                q.question_text,
-                q.difficulty,
-                COUNT(ea.id) as total_answers,
-                SUM(CASE WHEN ea.answer = q.correct_answer THEN 1 ELSE 0 END) as correct_answers,
-                ROUND(
-                    SUM(CASE WHEN ea.answer = q.correct_answer THEN 1 ELSE 0 END)::numeric / 
-                    NULLIF(COUNT(ea.id), 0) * 100, 
-                    2
-                ) as correct_percentage
-             FROM questions q
-             JOIN exam_questions eq ON q.id = eq.question_id
-             LEFT JOIN exam_answers ea ON q.id = ea.question_id
-             LEFT JOIN exam_submissions es ON ea.submission_id = es.id
-             WHERE eq.exam_id = $1
-             GROUP BY q.id, q.question_text, q.difficulty
-             ORDER BY correct_percentage ASC`,
-            [examId]
-        );
+        // Get exam questions
+        const { data: examQuestions } = await supabase
+            .from('exam_questions')
+            .select('question_id')
+            .eq('exam_id', examId);
 
-        res.json({ analytics: result.rows });
+        if (!examQuestions || examQuestions.length === 0) {
+            return res.json({ analytics: [] });
+        }
+
+        const questionIds = examQuestions.map(eq => eq.question_id);
+
+        // Get questions
+        const { data: questions } = await supabase
+            .from('questions')
+            .select('id, question_text, difficulty, correct_answer, points')
+            .in('id', questionIds);
+
+        // Get all answers for these questions
+        const { data: answers } = await supabase
+            .from('exam_answers')
+            .select('question_id, answer')
+            .in('question_id', questionIds);
+
+        // Calculate analytics for each question
+        const analytics = (questions || []).map(q => {
+            const questionAnswers = (answers || []).filter(a => a.question_id === q.id);
+            const totalAnswers = questionAnswers.length;
+            const correctAnswers = questionAnswers.filter(a =>
+                String(a.answer).trim().toUpperCase() === String(q.correct_answer).trim().toUpperCase()
+            ).length;
+
+            return {
+                id: q.id,
+                question_text: q.question_text,
+                difficulty: q.difficulty,
+                total_answers: totalAnswers,
+                correct_answers: correctAnswers,
+                correct_percentage: totalAnswers > 0
+                    ? ((correctAnswers / totalAnswers) * 100).toFixed(2)
+                    : '0.00'
+            };
+        });
+
+        // Sort by correct_percentage ascending (hardest questions first)
+        analytics.sort((a, b) => parseFloat(a.correct_percentage) - parseFloat(b.correct_percentage));
+
+        res.json({ analytics });
     } catch (err) {
         console.error('Error in getQuestionAnalytics:', err);
         res.status(500).json({ error: 'Server error' });
@@ -85,33 +135,38 @@ exports.getStudentPerformance = async (req, res) => {
     try {
         const { studentId } = req.params;
 
-        const result = await pool.query(
-            `SELECT 
-                es.*,
-                e.title as exam_title,
-                e.duration,
-                COUNT(ea.id) as answered_questions,
-                SUM(CASE WHEN ea.answer = q.correct_answer THEN 1 ELSE 0 END) as correct_answers
-             FROM exam_submissions es
-             JOIN exams e ON es.exam_id = e.id
-             LEFT JOIN exam_answers ea ON es.id = ea.submission_id
-             LEFT JOIN questions q ON ea.question_id = q.id
-             WHERE es.user_id = $1
-             GROUP BY es.id, e.title, e.duration
-             ORDER BY es.created_at DESC`,
-            [studentId]
-        );
+        // Get all submissions for this student
+        const { data: submissions, error } = await supabase
+            .from('exam_submissions')
+            .select(`
+                *,
+                exams:exam_id (title, duration)
+            `)
+            .eq('user_id', studentId)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error('Error fetching performance:', error);
+            return res.status(500).json({ error: 'Failed to fetch performance data' });
+        }
+
+        // Transform submissions
+        const performance = (submissions || []).map(s => ({
+            ...s,
+            exam_title: s.exams?.title,
+            duration: s.exams?.duration
+        }));
 
         // Calculate overall statistics
-        const scores = result.rows.map(r => r.score || 0);
-        const avgScore = scores.reduce((a, b) => a + b, 0) / scores.length || 0;
+        const scores = performance.map(r => r.score || 0);
+        const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
 
         res.json({
-            performance: result.rows,
+            performance,
             statistics: {
-                totalExams: result.rows.length,
+                totalExams: performance.length,
                 averageScore: avgScore.toFixed(2),
-                completedExams: result.rows.filter(r => r.status === 'completed').length
+                completedExams: performance.filter(r => r.status === 'submitted').length
             }
         });
     } catch (err) {

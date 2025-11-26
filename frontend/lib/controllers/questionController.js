@@ -1,11 +1,17 @@
 // Controller untuk CRUD soal, import/export
-const pool = require('../db');
+// Menggunakan Supabase Client untuk koneksi yang reliable
+const { createClient } = require('@supabase/supabase-js');
 const xlsx = require('xlsx');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const csv = require('csv-parser');
 const AdmZip = require('adm-zip');
+
+// Initialize Supabase client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Setup multer untuk upload file
 const storage = multer.diskStorage({
@@ -47,33 +53,31 @@ exports.getAllQuestions = async (req, res) => {
         const { page = 1, limit = 10, subject, difficulty } = req.query;
         const offset = (page - 1) * limit;
 
-        let query = 'SELECT * FROM questions WHERE 1=1';
-        const params = [];
-        let paramCount = 1;
+        let query = supabase.from('questions').select('*', { count: 'exact' });
 
         if (subject) {
-            query += ` AND subject = $${paramCount}`;
-            params.push(subject);
-            paramCount++;
+            query = query.eq('subject', subject);
         }
 
         if (difficulty) {
-            query += ` AND difficulty = $${paramCount}`;
-            params.push(difficulty);
-            paramCount++;
+            query = query.eq('difficulty', difficulty);
         }
 
-        query += ` ORDER BY created_at DESC LIMIT $${paramCount} OFFSET $${paramCount + 1}`;
-        params.push(limit, offset);
+        query = query.order('created_at', { ascending: false })
+            .range(offset, offset + parseInt(limit) - 1);
 
-        const result = await pool.query(query, params);
-        const countResult = await pool.query('SELECT COUNT(*) FROM questions');
+        const { data: questions, error, count } = await query;
+
+        if (error) {
+            console.error('Error fetching questions:', error);
+            return res.status(500).json({ error: 'Failed to fetch questions' });
+        }
 
         res.json({
-            questions: result.rows,
-            total: parseInt(countResult.rows[0].count),
+            questions: questions || [],
+            total: count || 0,
             page: parseInt(page),
-            totalPages: Math.ceil(countResult.rows[0].count / limit)
+            totalPages: Math.ceil((count || 0) / limit)
         });
     } catch (err) {
         console.error('Error in getAllQuestions:', err);
@@ -85,13 +89,18 @@ exports.getAllQuestions = async (req, res) => {
 exports.getQuestionById = async (req, res) => {
     try {
         const { id } = req.params;
-        const result = await pool.query('SELECT * FROM questions WHERE id = $1', [id]);
 
-        if (result.rows.length === 0) {
+        const { data: question, error } = await supabase
+            .from('questions')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (error || !question) {
             return res.status(404).json({ error: 'Question not found' });
         }
 
-        res.json(result.rows[0]);
+        res.json(question);
     } catch (err) {
         console.error('Error in getQuestionById:', err);
         res.status(500).json({ error: 'Server error' });
@@ -125,15 +134,29 @@ exports.createQuestion = async (req, res) => {
             created_by: req.user.id
         });
 
-        const result = await pool.query(
-            `INSERT INTO questions (question_text, question_type, options, correct_answer, subject, difficulty, points, created_by)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-            [question_text, question_type, parsedOptions, correct_answer, subject, difficulty, points, req.user.id]
-        );
+        const { data: question, error } = await supabase
+            .from('questions')
+            .insert([{
+                question_text,
+                question_type,
+                options: parsedOptions,
+                correct_answer,
+                subject,
+                difficulty,
+                points,
+                created_by: req.user.id
+            }])
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Error creating question:', error);
+            return res.status(500).json({ error: 'Failed to create question', details: error.message });
+        }
 
         res.status(201).json({
             message: 'Question created successfully',
-            question: result.rows[0]
+            question
         });
     } catch (err) {
         console.error('Error in createQuestion:', err);
@@ -156,21 +179,29 @@ exports.updateQuestion = async (req, res) => {
         const { id } = req.params;
         const { question_text, question_type, options, correct_answer, subject, difficulty, points } = req.body;
 
-        const result = await pool.query(
-            `UPDATE questions 
-             SET question_text = $1, question_type = $2, options = $3, correct_answer = $4, 
-                 subject = $5, difficulty = $6, points = $7, updated_at = CURRENT_TIMESTAMP
-             WHERE id = $8 RETURNING *`,
-            [question_text, question_type, options, correct_answer, subject, difficulty, points, id]
-        );
+        const { data: question, error } = await supabase
+            .from('questions')
+            .update({
+                question_text,
+                question_type,
+                options,
+                correct_answer,
+                subject,
+                difficulty,
+                points,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', id)
+            .select()
+            .single();
 
-        if (result.rows.length === 0) {
+        if (error || !question) {
             return res.status(404).json({ error: 'Question not found' });
         }
 
         res.json({
             message: 'Question updated successfully',
-            question: result.rows[0]
+            question
         });
     } catch (err) {
         console.error('Error in updateQuestion:', err);
@@ -182,9 +213,15 @@ exports.updateQuestion = async (req, res) => {
 exports.deleteQuestion = async (req, res) => {
     try {
         const { id } = req.params;
-        const result = await pool.query('DELETE FROM questions WHERE id = $1 RETURNING id', [id]);
 
-        if (result.rows.length === 0) {
+        const { data, error } = await supabase
+            .from('questions')
+            .delete()
+            .eq('id', id)
+            .select('id')
+            .single();
+
+        if (error || !data) {
             return res.status(404).json({ error: 'Question not found' });
         }
 
@@ -526,62 +563,55 @@ exports.importQuestions = async (req, res) => {
             });
         }
 
-        // Validate and insert questions
-        const client = await pool.connect();
-        try {
-            await client.query('BEGIN');
+        // Validate and insert questions using Supabase
+        const insertedQuestions = [];
+        const errors = [];
 
-            const insertedQuestions = [];
-            const errors = [];
-
-            for (let i = 0; i < questions.length; i++) {
-                const q = questions[i];
-                try {
-                    // Validate required fields
-                    if (!q.question_text || !q.question_type) {
-                        errors.push({ row: i + 2, error: 'Missing required fields (question_text or question_type)' });
-                        continue;
-                    }
-
-                    const result = await client.query(
-                        `INSERT INTO questions (question_text, question_type, options, correct_answer, subject, difficulty, points, created_by)
-                         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-                        [
-                            q.question_text,
-                            q.question_type,
-                            q.options ? JSON.stringify(q.options) : null,
-                            q.correct_answer,
-                            q.subject || 'Umum',
-                            q.difficulty || 'medium',
-                            q.points || 10,
-                            req.user.id
-                        ]
-                    );
-                    insertedQuestions.push(result.rows[0]);
-                } catch (err) {
-                    errors.push({ row: i + 2, error: err.message });
+        for (let i = 0; i < questions.length; i++) {
+            const q = questions[i];
+            try {
+                // Validate required fields
+                if (!q.question_text || !q.question_type) {
+                    errors.push({ row: i + 2, error: 'Missing required fields (question_text or question_type)' });
+                    continue;
                 }
+
+                const { data: question, error: insertError } = await supabase
+                    .from('questions')
+                    .insert([{
+                        question_text: q.question_text,
+                        question_type: q.question_type,
+                        options: q.options,
+                        correct_answer: q.correct_answer,
+                        subject: q.subject || 'Umum',
+                        difficulty: q.difficulty || 'medium',
+                        points: q.points || 10,
+                        created_by: req.user.id
+                    }])
+                    .select()
+                    .single();
+
+                if (insertError) {
+                    errors.push({ row: i + 2, error: insertError.message });
+                } else {
+                    insertedQuestions.push(question);
+                }
+            } catch (err) {
+                errors.push({ row: i + 2, error: err.message });
             }
-
-            await client.query('COMMIT');
-
-            // Delete uploaded file
-            fs.unlinkSync(filePath);
-
-            res.json({
-                message: 'Import completed',
-                success: insertedQuestions.length,
-                failed: errors.length,
-                total: questions.length,
-                questions: insertedQuestions,
-                errors: errors
-            });
-        } catch (err) {
-            await client.query('ROLLBACK');
-            throw err;
-        } finally {
-            client.release();
         }
+
+        // Delete uploaded file
+        fs.unlinkSync(filePath);
+
+        res.json({
+            message: 'Import completed',
+            success: insertedQuestions.length,
+            failed: errors.length,
+            total: questions.length,
+            questions: insertedQuestions,
+            errors: errors
+        });
     } catch (err) {
         console.error('Error in importQuestions:', err);
         // Clean up uploaded file on error

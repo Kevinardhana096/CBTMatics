@@ -1,7 +1,13 @@
 // Controller untuk autentikasi (login, register, logout)
-const pool = require('../db');
+// Menggunakan Supabase Client untuk koneksi yang reliable
+const { createClient } = require('@supabase/supabase-js');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+
+// Initialize Supabase client
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Register user baru
 exports.register = async (req, res) => {
@@ -14,12 +20,17 @@ exports.register = async (req, res) => {
         }
 
         // Cek apakah user sudah ada
-        const userExists = await pool.query(
-            'SELECT * FROM users WHERE email = $1 OR username = $2',
-            [email, username]
-        );
+        const { data: existingUsers, error: checkError } = await supabase
+            .from('users')
+            .select('id')
+            .or(`email.eq.${email},username.eq.${username}`);
 
-        if (userExists.rows.length > 0) {
+        if (checkError) {
+            console.error('Error checking user:', checkError);
+            return res.status(500).json({ error: 'Database error' });
+        }
+
+        if (existingUsers && existingUsers.length > 0) {
             return res.status(400).json({ error: 'User already exists' });
         }
 
@@ -27,14 +38,25 @@ exports.register = async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         // Insert user baru
-        const result = await pool.query(
-            'INSERT INTO users (username, email, password, role) VALUES ($1, $2, $3, $4) RETURNING id, username, email, role',
-            [username, email, hashedPassword, role || 'student']
-        );
+        const { data: newUser, error: insertError } = await supabase
+            .from('users')
+            .insert([{
+                username,
+                email,
+                password: hashedPassword,
+                role: role || 'student'
+            }])
+            .select('id, username, email, role')
+            .single();
+
+        if (insertError) {
+            console.error('Error inserting user:', insertError);
+            return res.status(500).json({ error: 'Failed to create user' });
+        }
 
         res.status(201).json({
             message: 'User registered successfully',
-            user: result.rows[0]
+            user: newUser
         });
     } catch (err) {
         console.error('Error in register:', err);
@@ -47,29 +69,36 @@ exports.login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
+        console.log('Login attempt for:', email);
+
         // Validasi input
         if (!email || !password) {
             return res.status(400).json({ error: 'Email and password are required' });
         }
 
         // Cari user berdasarkan email
-        const result = await pool.query(
-            'SELECT * FROM users WHERE email = $1',
-            [email]
-        );
+        const { data: user, error: findError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('email', email)
+            .single();
 
-        if (result.rows.length === 0) {
+        if (findError || !user) {
+            console.log('User not found:', email);
             return res.status(401).json({ error: 'Invalid credentials' });
         }
 
-        const user = result.rows[0];
+        console.log('User found:', user.username);
 
         // Verifikasi password
         const isValidPassword = await bcrypt.compare(password, user.password);
 
         if (!isValidPassword) {
+            console.log('Invalid password for:', email);
             return res.status(401).json({ error: 'Invalid credentials' });
         }
+
+        console.log('Password valid, generating token...');
 
         // Generate JWT token
         const token = jwt.sign(
@@ -77,6 +106,8 @@ exports.login = async (req, res) => {
             process.env.JWT_SECRET || 'your-secret-key',
             { expiresIn: '24h' }
         );
+
+        console.log('Login successful for:', email);
 
         res.json({
             message: 'Login successful',
@@ -90,7 +121,7 @@ exports.login = async (req, res) => {
         });
     } catch (err) {
         console.error('Error in login:', err);
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).json({ error: 'Server error', details: err.message });
     }
 };
 
@@ -102,16 +133,17 @@ exports.logout = (req, res) => {
 // Get current user info
 exports.getCurrentUser = async (req, res) => {
     try {
-        const result = await pool.query(
-            'SELECT id, username, email, role, created_at FROM users WHERE id = $1',
-            [req.user.id]
-        );
+        const { data: user, error } = await supabase
+            .from('users')
+            .select('id, username, email, role, created_at')
+            .eq('id', req.user.id)
+            .single();
 
-        if (result.rows.length === 0) {
+        if (error || !user) {
             return res.status(404).json({ error: 'User not found' });
         }
 
-        res.json({ user: result.rows[0] });
+        res.json({ user });
     } catch (err) {
         console.error('Error in getCurrentUser:', err);
         res.status(500).json({ error: 'Server error' });
