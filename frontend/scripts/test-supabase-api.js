@@ -3,10 +3,10 @@ require('dotenv').config({ path: '.env.local' });
 
 async function testSupabaseConnection() {
     console.log('🔍 Testing Supabase Connection via API Client...\n');
-    
+
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-    
+
     if (!supabaseUrl || !supabaseKey) {
         console.error('❌ Missing Supabase credentials in .env.local');
         console.error('NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl ? '✓' : '✗');
@@ -26,7 +26,7 @@ async function testSupabaseConnection() {
             .from('users')
             .select('id, username, email, role')
             .limit(5);
-        
+
         if (usersError) {
             console.error('❌ Error:', usersError.message);
             console.error('Details:', usersError);
@@ -42,7 +42,7 @@ async function testSupabaseConnection() {
         const { count: questionCount, error: questionsError } = await supabase
             .from('questions')
             .select('*', { count: 'exact', head: true });
-        
+
         if (questionsError) {
             console.error('❌ Error:', questionsError.message);
         } else {
@@ -54,7 +54,7 @@ async function testSupabaseConnection() {
         const { count: examCount, error: examsError } = await supabase
             .from('exams')
             .select('*', { count: 'exact', head: true });
-        
+
         if (examsError) {
             console.error('❌ Error:', examsError.message);
         } else {
@@ -67,7 +67,7 @@ async function testSupabaseConnection() {
             .from('exams')
             .select('id, title, description, duration')
             .limit(1);
-        
+
         if (examError) {
             console.error('❌ Error:', examError.message);
         } else if (exams && exams.length > 0) {
@@ -84,7 +84,7 @@ async function testSupabaseConnection() {
             .select('email, password')
             .eq('email', 'admin@cbt.com')
             .single();
-        
+
         if (pwdError) {
             console.error('❌ Error:', pwdError.message);
         } else if (userWithPwd) {

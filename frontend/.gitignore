@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Backups (keep README)
+backups/*.sql
+
+# Uploads (generated at runtime)
+uploads/
+public/uploads/questions/*
+!public/uploads/questions/.gitkeep

@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "db:test": "node scripts/test-supabase-api.js",
+    "db:export": "node scripts/export-supabase-data.js",
+    "db:password": "node scripts/generate-passwords.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.84.0",
