@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 
 interface ProtectedRouteProps {
     children: React.ReactNode;
-    allowedRoles?: string[]; // ['admin', 'teacher', 'student']
+    allowedRoles?: string[];
 }
 
 export default function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
@@ -14,47 +14,31 @@ export default function ProtectedRoute({ children, allowedRoles }: ProtectedRout
     const router = useRouter();
 
     useEffect(() => {
-        if (!loading) {
-            // Redirect to login if not authenticated
-            if (!user) {
-                router.push('/login');
-                return;
-            }
-
-            // Check role-based access
-            if (allowedRoles && !allowedRoles.includes(user.role)) {
-                // Redirect based on user's actual role
-                if (user.role === 'admin' || user.role === 'teacher') {
-                    router.push('/admin/questions');
-                } else {
-                    router.push('/student/exams');
-                }
+        if (!loading && !user) {
+            router.push('/login');
+        } else if (!loading && user && allowedRoles && !allowedRoles.includes(user.role)) {
+            // User doesn't have required role
+            if (user.role === 'student') {
+                router.push('/student/exams');
+            } else {
+                router.push('/admin/questions');
             }
         }
     }, [user, loading, allowedRoles, router]);
 
-    // Show loading state
-    if (loading) {
+    // Show loading or nothing while checking auth
+    if (loading || !user) {
         return (
-            <div className="min-h-screen flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)' }}>
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#112C70] mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Loading...</p>
-                </div>
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
             </div>
         );
     }
 
-    // Show nothing while redirecting
-    if (!user) {
-        return null;
-    }
-
-    // Check role access
+    // Check role permissions
     if (allowedRoles && !allowedRoles.includes(user.role)) {
         return null;
     }
 
-    // Render protected content
     return <>{children}</>;
 }

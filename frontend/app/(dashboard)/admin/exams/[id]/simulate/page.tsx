@@ -95,7 +95,7 @@ export default function ExamSimulatePage() {
                     return parsed;
                 }
                 if (typeof parsed === 'object' && parsed !== null) {
-                    const values = Object.values(parsed);
+                    const values = Object.values(parsed) as string[];
                     console.log('Converted object to array:', values);
                     return values;
                 }
@@ -107,7 +107,7 @@ export default function ExamSimulatePage() {
         }
 
         if (typeof options === 'object' && options !== null) {
-            const values = Object.values(options);
+            const values = Object.values(options) as string[];
             console.log('Converted object options to array:', values);
             return values;
         }
