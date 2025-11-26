@@ -55,14 +55,30 @@ psql "postgresql://postgres.[PROJECT-REF]:[YOUR-PASSWORD]@db.[PROJECT-REF].supab
 
 ⚠️ **PENTING**: `service_role` key adalah **SECRET** - jangan expose di client!
 
-#### B. Database Connection String (Optional - untuk raw SQL)
+#### B. Database Connection String (untuk raw SQL & production/VPS)
 
 1. Buka **Project Settings** > **Database**
 2. Scroll ke **Connection String** > pilih tab **URI**
-3. Copy connection string:
+3. **PENTING**: Ada 2 mode connection:
+
+   **A. Transaction Mode (Pooler) - Port 6543** ⚠️ Tidak direkomendasikan untuk production
    ```
    postgresql://postgres.[PROJECT-REF]:[YOUR-PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres
    ```
+   - Untuk development dengan connection pooling
+   - Tidak cocok untuk long-running connections
+   - Timeout setelah beberapa menit
+
+   **B. Direct Connection - Port 5432** ✅ **Recommended untuk Production/VPS**
+   ```
+   postgresql://postgres:[YOUR-PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres
+   ```
+   - Direct connection ke database
+   - Stabil untuk production
+   - Mudah migrasi ke VPS
+   - Support semua PostgreSQL features
+
+4. **Gunakan Direct Connection (port 5432)** untuk production dan VPS migration!
 
 ### 4. Setup Environment Variables
 
@@ -74,8 +90,9 @@ NEXT_PUBLIC_SUPABASE_URL=https://[PROJECT-REF].supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
-# Supabase Database Connection (for raw SQL)
-DATABASE_URL=postgresql://postgres.[PROJECT-REF]:[YOUR-PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres
+# Supabase Database Connection (Direct connection - Port 5432)
+# Recommended for production/VPS migration
+DATABASE_URL=postgresql://postgres:[YOUR-PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres
 
 # JWT Secret
 JWT_SECRET=your-super-secret-jwt-key-at-least-32-characters
