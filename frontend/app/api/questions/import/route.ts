@@ -127,7 +127,7 @@ function parseCSV(csvContent: string): any[] {
         // Build options object
         let options: Record<string, string> | null = null;
         if (row.option_a || row.option_b) {
-            options = {
+            const tempOptions: Record<string, string> = {
                 A: row.option_a || '',
                 B: row.option_b || '',
                 C: row.option_c || '',
@@ -135,9 +135,10 @@ function parseCSV(csvContent: string): any[] {
                 E: row.option_e || ''
             };
             // Remove empty options
-            Object.keys(options).forEach(key => {
-                if (!options[key]) delete options[key];
+            Object.keys(tempOptions).forEach(key => {
+                if (!tempOptions[key]) delete tempOptions[key];
             });
+            options = Object.keys(tempOptions).length > 0 ? tempOptions : null;
         }
 
         questions.push({
