@@ -30,7 +30,7 @@ exports.getUsers = async (req, res) => {
 
         let query = getSupabase()
             .from('users')
-            .select('id, username, email, role, plain_password, created_at')
+            .select('id, username, email, role, created_at, plain_password')
             .order('created_at', { ascending: false });
 
         if (role) {
@@ -41,13 +41,25 @@ exports.getUsers = async (req, res) => {
 
         if (error) {
             console.error('Error fetching users:', error);
+            // If plain_password column doesn't exist, try without it
+            if (error.message && error.message.includes('plain_password')) {
+                const { data: usersWithoutPassword, error: error2 } = await getSupabase()
+                    .from('users')
+                    .select('id, username, email, role, created_at')
+                    .order('created_at', { ascending: false });
+                
+                if (error2) {
+                    return res.status(500).json({ error: 'Failed to fetch users' });
+                }
+                return res.json({ users: usersWithoutPassword || [] });
+            }
             return res.status(500).json({ error: 'Failed to fetch users' });
         }
 
         res.json({ users: users || [] });
     } catch (err) {
         console.error('Error in getAllUsers:', err);
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).json({ error: 'Server error', details: err.message });
     }
 };
 
