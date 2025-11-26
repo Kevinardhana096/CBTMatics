@@ -8,6 +8,15 @@ function getSupabase() {
     if (!supabaseInstance) {
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
         const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        
+        if (!supabaseUrl || !supabaseKey) {
+            console.error('Missing Supabase environment variables:', {
+                hasUrl: !!supabaseUrl,
+                hasKey: !!supabaseKey
+            });
+            throw new Error('Supabase configuration missing');
+        }
+        
         supabaseInstance = createClient(supabaseUrl, supabaseKey);
     }
     return supabaseInstance;
@@ -379,7 +388,14 @@ exports.getUserSubmissions = async (req, res) => {
 // Get user results (for student results page)
 exports.getUserResults = async (req, res) => {
     try {
-        const { data: submissions, error } = await getSupabase()
+        const supabase = getSupabase();
+        
+        if (!supabase) {
+            console.error('Supabase client not initialized');
+            return res.status(500).json({ error: 'Database connection error' });
+        }
+
+        const { data: submissions, error } = await supabase
             .from('exam_submissions')
             .select(`
                 id,
@@ -395,7 +411,7 @@ exports.getUserResults = async (req, res) => {
 
         if (error) {
             console.error('Error fetching results:', error);
-            return res.status(500).json({ error: 'Failed to fetch results' });
+            return res.status(500).json({ error: 'Failed to fetch results', details: error.message });
         }
 
         const results = (submissions || []).map(s => ({
@@ -413,7 +429,7 @@ exports.getUserResults = async (req, res) => {
         res.json({ results });
     } catch (err) {
         console.error('Error in getUserResults:', err);
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).json({ error: 'Server error', details: err.message });
     }
 };
 

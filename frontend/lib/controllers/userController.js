@@ -9,6 +9,15 @@ function getSupabase() {
     if (!supabaseInstance) {
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
         const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+        
+        if (!supabaseUrl || !supabaseKey) {
+            console.error('Missing Supabase environment variables:', {
+                hasUrl: !!supabaseUrl,
+                hasKey: !!supabaseKey
+            });
+            throw new Error('Supabase configuration missing');
+        }
+        
         supabaseInstance = createClient(supabaseUrl, supabaseKey);
     }
     return supabaseInstance;
