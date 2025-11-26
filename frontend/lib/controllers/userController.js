@@ -30,7 +30,7 @@ exports.getUsers = async (req, res) => {
 
         let query = getSupabase()
             .from('users')
-            .select('id, username, email, role, created_at')
+            .select('id, username, email, role, plain_password, created_at')
             .order('created_at', { ascending: false });
 
         if (role) {
@@ -96,13 +96,14 @@ exports.createUser = async (req, res) => {
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Insert user baru
+        // Insert user baru dengan plain_password
         const { data: user, error } = await getSupabase()
             .from('users')
             .insert([{
                 username,
                 email,
                 password: hashedPassword,
+                plain_password: password,
                 role: role || 'student'
             }])
             .select('id, username, email, role')
@@ -139,6 +140,7 @@ exports.updateUser = async (req, res) => {
         // Update password jika diberikan
         if (password) {
             updateData.password = await bcrypt.hash(password, 10);
+            updateData.plain_password = password;
         }
 
         const { data: user, error } = await getSupabase()
